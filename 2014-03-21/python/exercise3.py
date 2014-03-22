@@ -205,5 +205,5 @@ roofTop = T(3)(9.5)(PROD([roofTop,Q(1.7)]))
 floor1 = INSR(STRUCT)([basementTop,roof,basement,roofTop])
 floor1 = T(3)(19.45)(floor1)
 
-two_and_half_model = STRUCT([floor0,floor1])
-VIEW(two_and_half_model)
+solid_model_3D = STRUCT([floor0,floor1])
+VIEW(solid_model_3D)
