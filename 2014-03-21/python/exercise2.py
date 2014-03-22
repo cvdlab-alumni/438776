@@ -66,14 +66,19 @@ basementTopNORD = MKPOL([basementTopNORDVerts, basementTopNORDCells, pols])
 basementTopNORD = COLOR([0.750,0.750,0.750])(basementTopNORD)
 
 #roof
-roofNORDVerts = [[12.55,0,23.95],[52.85,0,23.95],[52.85,0,30.65],[12.55,0,30.65]]
+roofNORDVerts = [[12.55,0,23.95],[52.85,0,23.95],[52.85,0,28.95],[12.55,0,28.95]]
 roofNORDCells = [[1,2,3,4]]
 roofNORD = MKPOL([roofNORDVerts, roofNORDCells, pols])
 roofNORD = COLOR([0.600,0.600,0.600])(roofNORD)
 
+#roof top
+roofTopNORDVerts = [[11.55,0,28.95],[53.85,0,28.95],[53.85,0,30.65],[11.55,0,30.65]]
+roofTopNORDCells = [[1,2,3,4]]
+roofTopNORD = MKPOL([roofTopNORDVerts, roofTopNORDCells, pols])
+roofTopNORD = COLOR(WHITE)(roofTopNORD)
 
 
-NORD = INSR(STRUCT)([coloredgardenNORD,coloredfirstStairNORD,coloredsecondStair,columnBasement,topCapitelloNORD,bottomCapitelloNORD,columns,wallNORD,basementNORD,basementTopNORD,roofNORD])
+NORD = INSR(STRUCT)([coloredgardenNORD,coloredfirstStairNORD,coloredsecondStair,columnBasement,topCapitelloNORD,bottomCapitelloNORD,columns,wallNORD,basementNORD,basementTopNORD,roofNORD,roofTopNORD])
 
 
 ######################################### OVEST #########################################
@@ -141,14 +146,18 @@ basementTopOVEST = MKPOL([basementTopOVESTVerts, basementTopOVESTCells, pols])
 basementTopOVEST = COLOR([0.750,0.750,0.750])(basementTopOVEST)
 
 #roof
-roofOVESTVerts = [[65.4,12.55,23.95],[65.4,36.05,23.95],[65.4,36.05,30.65],[65.4,12.55,30.65]]
+roofOVESTVerts = [[65.4,12.55,23.95],[65.4,36.05,23.95],[65.4,36.05,28.95],[65.4,12.55,28.95]]
 roofOVESTCells = [[1,2,3,4]]
 roofOVEST = MKPOL([roofOVESTVerts, roofOVESTCells, pols])
 roofOVEST = COLOR([0.600,0.600,0.600])(roofOVEST)
 
+#roof top
+roofOVESTTopVerts = [[65.4,11.5,28.95],[65.4,37.05,28.95],[65.4,37.05,30.65],[65.4,11.55,30.65]]
+roofOVESTTopCells = [[1,2,3,4]]
+roofOVESTTop = MKPOL([roofOVESTTopVerts, roofOVESTTopCells, pols])
+roofOVESTTop = COLOR(WHITE)(roofOVESTTop)
 
-
-OVEST = INSR(STRUCT)([gardenOVEST,firstStairOVEST,secondStairOVEST,columnBasementOVEST,topCapitelloOVEST,bottomCapitelloOVEST,columnsOVEST,wallOVEST,basementOVEST,basementTopOVEST,roofOVEST])
+OVEST = INSR(STRUCT)([gardenOVEST,firstStairOVEST,secondStairOVEST,columnBasementOVEST,topCapitelloOVEST,bottomCapitelloOVEST,columnsOVEST,wallOVEST,basementOVEST,basementTopOVEST,roofOVEST,roofOVESTTop])
 
 
 ######################################### EST #########################################
@@ -159,7 +168,7 @@ EST = ROTATE([1,2])(PI)(EST)
 
 ######################################### SUD #########################################
 
-SUD = INSR(STRUCT)([coloredgardenNORD,coloredfirstStairNORD,coloredsecondStair,columnBasement,topCapitelloNORD,bottomCapitelloNORD,columns,basementNORD,basementTopNORD,roofNORD])
+SUD = INSR(STRUCT)([coloredgardenNORD,coloredfirstStairNORD,coloredsecondStair,columnBasement,topCapitelloNORD,bottomCapitelloNORD,columns,basementNORD,basementTopNORD,roofNORD,roofTopNORD])
 SUD = ROTATE([1,2])(PI)(SUD)
 SUD = T([1,2])([65.4,47.7])(SUD)
 
@@ -357,7 +366,14 @@ roofCells = [[1,2,3,4]]
 roof = MKPOL([roofVerts, roofCells, pols])
 roof = COLOR(WHITE)(roof)
 
+#roof top
+roofTopVerts = [[11.55,11.55],[53.85,11.55],[53.85,36.15],[11.55,36.15]]
+roofTopCells = [[1,2,3,4]]
+roofTop = MKPOL([roofTopVerts, roofTopCells, pols])
+roofTop = COLOR(WHITE)(roofTop)
 
+
+floor1 = INSR(STRUCT)([basementTop,roof,basement,roofTop])
 
 floor1 = INSR(STRUCT)([basementTop, roof,basement])
 floor1 = T(3)(18.6)(floor1)
