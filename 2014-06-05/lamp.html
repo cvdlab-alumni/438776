@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+ <head> 
+  <title>Homework 4 - Lamp</title> 
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style> 
+  </head> 
+  <body>
+    <!-- JavaScript libraries -->
+    <script src="three.min.js"></script> 
+    <script src="jquery.min.js"></script>
+    <script src="Stats.min.js"></script>
+    <script src="dat.gui.min.js"></script>
+    <script src="TrackballControls.js"></script>
+    <script type="text/javascript" src="helvetiker_regular.typeface.js"></script> 
+    <script type="text/javascript" src="helvetiker_bold.typeface.js"></script> 
+    <script type="text/javascript" src="bitstream_vera_sans_mono_roman.typeface.js"></script>
+    <script src="keyframe.js"></script>
+    <script src="tween.min.js"></script>
+    <!-- Javascript code that runs Three.js homework --> 
+    <script>
+      // once everything is loaded, we run our Three.js stuff.
+      $(function () {
+      	// here we'll put the Three.js stuff
+
+        var stats = initStats();
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+
+        // position and point the camera to the center of the scene
+        camera.position.set(-150,300,450);
+        camera.up = new THREE.Vector3(0,0,1);
+        camera.lookAt(scene.position.set(0,50,0));
+
+        // create a render and set the size
+        var renderer = new THREE.WebGLRenderer();
+
+        renderer.setClearColor(new THREE.Color(0xEEEEEE));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMapEnabled = true;
+
+        var trackballControls = new THREE.TrackballControls(camera);
+
+        var axisHelper = new THREE.AxisHelper(3);
+        scene.add(axisHelper);
+
+        //Function that generate a couple sphere-cylinder with radius and height given
+        function createSphereCylinder (radius, height) {
+          var result = new THREE.Object3D();
+
+          var sphere = createSphere(radius);
+          sphere.position.set(0, 0, 0);
+          result.add(sphere);
+
+          var cylinder = createCylinder(radius, height);
+          cylinder.position.set(0, height/2 + radius, 0);
+          result.add(cylinder);
+
+          var hook = new THREE.Object3D();
+          hook.position.set(0, height/2 + radius, 0);
+          cylinder.add(hook);
+
+          result.sphere = sphere;
+          result.cylinder = cylinder;
+          result.hook = hook;
+
+          return result;
+        }
+
+        function createPlane(width, height) {
+          var planeGeometry = new THREE.PlaneGeometry(width, height, 400, 400);
+          var planeMaterial = new THREE.MeshLambertMaterial({color: 0x00bbff, side: THREE.DoubleSide, specular: 0xffffff, metal: true});
+          var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+          
+          plane.receiveShadow = true;
+
+          return plane;
+        }
+
+        function createCylinder(radius, height) {
+          var cylinderGeometry = new THREE.CylinderGeometry(radius, radius, height, 30, 30, false); //open ended false
+          var cylinderMaterial = new THREE.MeshPhongMaterial({color: 0xcccccc, shading: THREE.FlatShading});
+          var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+
+          cylinder.receiveShadow = true;
+          cylinder.castShadow = true;
+
+          return cylinder;
+        }
+
+        function createSphere(radius) {
+          var sphereGeometry = new THREE.SphereGeometry(radius, 30, 30);
+          var sphereMaterial = new THREE.MeshPhongMaterial({color: 0xdddd33, shading: THREE.FlatShading});
+          var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+          
+          sphere.receiveShadow = true;
+          sphere.castShadow = true;
+          
+          return sphere;
+        }
+
+        function createLampholder(radius) {
+          var result = new THREE.Object3D();
+
+          var lampholderGeometry = new THREE.SphereGeometry(radius, 30, 30, -Math.PI, Math.PI);
+          var lampholderMaterial = new THREE.MeshPhongMaterial({color: 0xcccccc, shading: THREE.FlatShading, side: THREE.DoubleSide, specular: 0xffffff, metal: true});
+          var lampholder = new THREE.Mesh(lampholderGeometry, lampholderMaterial);          
+          lampholder.position.set(0, 0, 0);
+          lampholder.receiveShadow = true;
+          lampholder.castShadow = true;
+          result.add(lampholder);
+
+          var lightTarget = new THREE.Object3D();
+          lightTarget.position.set(0, 0, radius*50);
+          result.add(lightTarget);
+
+          result.lightTarget = lightTarget;          
+
+          result.receiveShadow = true;
+          result.castShadow = true;
+
+          return result;
+        }
+
+        function createLamp(radius) {
+          var lampGeometry = new THREE.SphereGeometry(radius, 30, 30);
+          var lampMaterial = new THREE.MeshLambertMaterial({color: 0xffe900, shading: THREE.FlatShading, transparent: true, opacity: 0.5});
+          var lamp = new THREE.Mesh(lampGeometry, lampMaterial);
+          
+          lamp.receiveShadow = true;
+          lamp.castShadow = true;
+
+          return lamp;
+        }
+
+        function createMesh(geom, textColor) {
+          var meshMaterial = new THREE.MeshPhongMaterial({specular: 0xffffff, color: textColor, shininess: 100, metal: true});
+          var textMesh = new THREE.Mesh(geom, meshMaterial);
+          textMesh.castShadow = true;
+
+          return textMesh;
+        }
+
+
+
+        //Variables
+        planeWidth = 700;
+        planeHeight = 400;
+
+        sphereRadius = 4;
+        cylinderHeight = 30;
+        
+        basementRadius = 20;
+        basementHeight = 5; 
+
+        lampholderRadius = 25;
+
+        lampRadius = lampholderRadius/3;
+
+        cubeDimension = 50;
+
+        textHeight = 90;
+        textBevelThickness = 1;
+
+        //Scene composition
+        var desktop = createPlane(planeWidth, planeHeight);
+        scene.add(desktop);
+
+        var basement = createCylinder(basementRadius, basementHeight)
+        basement.rotation.x = Math.PI/2;
+        basement.position.set(basement.position.x, basement.position.y, basement.position.z + basementHeight/2);
+        scene.add(basement);
+
+        var firstOrientablePin = new THREE.Object3D();
+        basement.add(firstOrientablePin); //created to not rotate the basement
+
+        var firstOrientable = createSphereCylinder(sphereRadius, cylinderHeight);
+        firstOrientable.position.set(firstOrientable.position.x, firstOrientable.position.y + sphereRadius + basementHeight/2, firstOrientable.position.z); //y (not z) must be increased, because of the rotation of the basement
+        firstOrientablePin.add(firstOrientable);
+
+        var secondOrientable = createSphereCylinder(sphereRadius, cylinderHeight);
+        firstOrientable.hook.add(secondOrientable);
+
+        var lampSphere= createSphere(sphereRadius);
+        secondOrientable.hook.add(lampSphere);
+
+        var lampholder = createLampholder(lampholderRadius);
+        lampholder.position.set(lampholder.position.x, lampholder.position.y + sphereRadius + lampholderRadius, lampholder.position.z); //y (not z) must be increased, because of the rotation of the basement
+        lampholder.rotation.x = -Math.PI/2;
+        lampSphere.add(lampholder);
+
+        var lamp = createLamp(lampRadius);
+        lamp.position.set(lamp.position.x, lamp.position.y, lamp.position.z - lampholderRadius + lampRadius);
+        lampholder.add(lamp);
+
+        var lightTarget = new THREE.Object3D();
+        lampholder.lightTarget.add(lightTarget);
+
+        var cubeGeometry = new THREE.BoxGeometry(cubeDimension, cubeDimension, cubeDimension);
+        var cubeMaterial = new THREE.MeshLambertMaterial({color: 0xff0004, side: THREE.DoubleSide});
+        var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube.receiveShadow = true;
+        cube.castShadow = true;
+        cube.position.set(50, 0, cubeDimension);
+        scene.add(cube);
+
+        var options = {
+            size: 90,
+            height: textHeight,
+            font: "helvetiker",
+            bevelThickness: textBevelThickness,
+            bevelSize: 0.5,
+            bevelSegments: 3,
+            bevelEnabled: true,
+            curveSegments: 12,
+            steps: 1
+        };
+
+        var text = createMesh(new THREE.TextGeometry("CV", options), 0x396d35);
+        text.position.z = 1;
+        text.position.x = 220;
+        text.position.y = -45;
+        text.rotation.x = -Math.PI/2;
+        text.rotation.z = Math.PI;
+        text.castShadow = true;
+        text.receiveShadow = true;
+        scene.add(text);
+
+        var text2 = createMesh(new THREE.TextGeometry("D", options), 0x396d35);
+        text2.position.z = 1;
+        text2.position.x = 50;
+        text2.position.y = -45;
+        text2.rotation.x = -Math.PI/2;
+        text2.rotation.z = Math.PI;
+        text2.castShadow = true;
+        text2.receiveShadow = true;
+        scene.add(text2);
+
+        var text3 = createMesh(new THREE.TextGeometry("Lab", options), 0x70c46a);
+        text3.position.z = 1;
+        text3.position.x = -50;
+        text3.position.y = -45;
+        text3.rotation.x = -Math.PI/2;
+        text3.rotation.z = Math.PI;
+        text3.castShadow = true;
+        text3.receiveShadow = true;
+        scene.add(text3);
+
+
+        desktop.position.x += 50;
+
+
+
+        //Lights
+        //Directional light
+        var pointColor = "#ffffff";
+        var directionalLight = new THREE.DirectionalLight(pointColor);
+        directionalLight.position.set(0, 0, 200);
+        directionalLight.shadowMapWidth = 1024;
+        directionalLight.shadowMapHeight = 1024;
+        directionalLight.shadowCameraNear = 2;
+        directionalLight.shadowCameraFar = 300;
+        directionalLight.shadowCameraLeft = -350;
+        directionalLight.shadowCameraRight = 350;
+        directionalLight.shadowCameraTop = 200;
+        directionalLight.shadowCameraBottom = -200;
+        directionalLight.intensity = 0.5;
+        directionalLight.target = desktop;
+
+        scene.add(directionalLight);
+
+        //Ambient lighting
+        var ambiColor = "#0c0c0c";
+        var ambientLight = new THREE.AmbientLight(ambiColor);
+        scene.add(ambientLight);
+
+        //Spotlight simulating the lamp
+        var spotLight = new THREE.SpotLight(0xffffff);
+        spotLight.intensity = 3;
+        spotLight.angle = Math.PI/6;
+        spotLight.target = lampholder.lightTarget;
+        spotLight.castShadow = true;
+        spotLight.shadowCameraNear = Math.abs(cube.position.x - firstOrientablePin.position.x) + 5;
+        spotLight.shadowMapWidth = 1024;
+        spotLight.shadowMapHeight = 1024;
+        lamp.add(spotLight);
+
+        //Point light simulating the bulb
+        var pointColor = "#fff600";
+        var pointLight = new THREE.PointLight(pointColor);
+        pointLight.distance = lampholderRadius + 1; //+1 to hit the border
+        pointLight.intensity = 100;
+        pointLight.position.z = pointLight.position.z;
+        lampholder.add(pointLight);
+
+
+
+        //Controls
+        var controls = new function () {
+          this.alpha = Math.PI/3;
+          this.beta = 0.0;
+          this.gamma = Math.PI/4;
+          this.delta = 0.0;
+          this.epsilon = Math.PI/3;
+          this.Light = true;
+          this.lamp_x = 25;
+          this.lamp_y = 0.0;
+          this.object_x = planeWidth/2 - cubeDimension;
+          this.object_y = 0;
+          this.TrackballControls = true;
+          this.Animate = true;
+          this.Duration = 25;
+        };
+
+        var gui = new dat.GUI();
+        var lampOrientationGIU = gui.addFolder('Lamp orientation parameters');
+        var lampPositioningGIU = gui.addFolder('Lamp positioning parameters');
+        var objectPositioningGIU = gui.addFolder('Object positioning parameters');
+
+
+        lampOrientationGIU.add(controls, 'alpha', 0.0, 2*Math.PI).onChange(function (value) {
+          firstOrientablePin.rotation.y = value;
+        });
+        lampOrientationGIU.add(controls, 'beta', 0.0, Math.PI/2).onChange(function (value) {
+           firstOrientable.rotation.z = value; 
+        });
+        lampOrientationGIU.add(controls, 'gamma', 0.0, Math.PI/2).onChange(function (value) {
+          secondOrientable.rotation.z = value; 
+        });
+        lampOrientationGIU.add(controls, 'delta', 0.0, 2*Math.PI).onChange(function (value) {
+          secondOrientable.cylinder.rotation.y = value; 
+        });
+        lampOrientationGIU.add(controls, 'epsilon', 0.0, Math.PI/2).onChange(function (value) {
+          lampSphere.rotation.z = value; 
+        });
+        var light_control = gui.add(controls, 'Light');
+        light_control.onChange(function (value) {
+          if (value) {
+            spotLight.intensity = 3;
+            pointLight.intensity = 50;
+            cube.castShadow = true;
+            text.castShadow = true;
+            text2.castShadow = true;
+            text3.castShadow = true;
+          } else {
+            spotLight.intensity = 0;
+            pointLight.intensity = 0;
+            cube.castShadow = false;
+            text.castShadow = false;
+            text2.castShadow = false;
+            text3.castShadow = false;
+          };          
+        });
+        lampPositioningGIU.add(controls, 'lamp_x', -planeWidth/2 + basementRadius*4, planeWidth/2 - basementRadius).onChange(function (value) {
+          basement.position.x = value; 
+        });
+        lampPositioningGIU.add(controls, 'lamp_y', -planeHeight/2 + basementRadius*2, planeHeight/2 - basementRadius).onChange(function (value) {
+          basement.position.y = value; 
+        });
+        objectPositioningGIU.add(controls, 'object_x', -planeWidth/2 + cubeDimension*2, planeWidth/2 - cubeDimension).onChange(function (value) {
+          cube.position.x = value; 
+        });
+        objectPositioningGIU.add(controls, 'object_y', -planeHeight/2 + cubeDimension, planeHeight/2 - cubeDimension).onChange(function (value) {
+          cube.position.y = value; 
+        });
+        var trackballControls_control = gui.add(controls, 'TrackballControls');
+        gui.add(controls, 'Animate').onChange(function (value) {
+          if (value) {
+            controls.alpha = Math.PI/3;
+            controls.beta = 0.0;
+            controls.gamma = Math.PI/4;
+            controls.delta = 0.0;
+            controls.epsilon = Math.PI/3;
+            initAnimator();
+            animator.start(); 
+          } else {
+            controls.alpha = Math.PI/3;
+            controls.beta = 0.0;
+            controls.gamma = Math.PI/4;
+            controls.delta = 0.0;
+            controls.epsilon = Math.PI/3;
+            controls.alpha = -Math.PI/2;
+            text2.scale.y = 1;
+            animator.stop();
+          };
+        });
+        gui.add(controls, 'Duration', 0.0, 50).onChange(function (value) {
+          duration = value;
+          initAnimator();
+          animator.start();
+        });
+
+
+
+        //Animations
+        var animator = null;
+        var duration = 25; //sec
+        var loopAnimation = true;
+
+        function initAnimator() {
+          animator = new KF.KeyFrameAnimator;
+          animator.init({ 
+            interps:
+              [
+                { 
+                  keys:[0, .2, 1], 
+                  values:[
+                    {y: 0},
+                    {y: Math.PI},
+                    {y: Math.PI*2},
+                  ],
+                  target:cube.rotation
+                },
+                { 
+                  keys:[0, .175, .25, .375, .4, .5, .525, .5875, .625, .675, .7125, .725, .775], 
+                  values:[
+                    {x: planeWidth/2, y: planeHeight/2 - basementRadius, z: basementHeight/2},
+                    {x: planeWidth/2, y: planeHeight/2 - basementRadius, z: basementHeight/2},
+                    {x: planeWidth/2, y: planeHeight/2 - basementRadius, z: basementHeight/2},
+                    {x: planeWidth/2, y: planeHeight/2 - basementRadius, z: basementHeight/2},
+                    {x: planeWidth/2, y: planeHeight/2 - basementRadius, z: textHeight + 2*textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: textHeight + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: textHeight + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: 2*textHeight + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: textHeight + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: textHeight/2 + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: textHeight + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: textHeight/2 + textBevelThickness + basementHeight/2},
+                    {x: 30, y: 0, z: basementHeight/2},
+                  ],
+                  target:basement.position
+                },
+                { 
+                  keys:[0, .175, .25, .375, .4, .5, .525, .5875, .625, .675, .7125, .725, .775], 
+                  values:[
+                    {y: Math.PI/4},
+                    {y: -Math.PI/4},
+                    {y: Math.PI/4},
+                    {y: -Math.PI/4},
+                    {y: -Math.PI/4},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                    {y: Math.PI*3/2},
+                  ],
+                  target:firstOrientablePin.rotation
+                },
+                { 
+                  keys:[0, .175, .25, .375, .4, .5, .525, .5875, .625, .675, .7125, .725, .775], 
+                  values:[
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: 1},
+                    {y: .5},
+                    {y: .5},
+                    {y: .5},
+                    {y: .0001}, //not 0 to avoid "Matrix3.getInverse(): can't invert matrix, determinant is 0" warning
+                  ],
+                  target:text2.scale
+                },
+              ],
+            loop: loopAnimation,
+            duration: duration * 1000,
+          });
+        }
+
+        initAnimator();
+
+
+
+        // add the output of the renderer to the html element
+        $('body').append(renderer.domElement);
+
+
+        function initStats() {
+          var stats = new Stats();
+          stats.setMode(0); // 0: fps, 1: ms
+          $('body').append(stats.domElement);
+          return stats;
+        }
+
+        
+        render();
+        animator.start();
+
+        function render() {
+          stats.update();         
+          KF.update();
+
+          if (controls.TrackballControls) {
+            trackballControls.update();
+          }
+          
+          basement.rotation.y = controls.alpha;
+          firstOrientable.rotation.z = controls.beta; 
+          secondOrientable.rotation.z = controls.gamma; 
+          secondOrientable.cylinder.rotation.y = controls.delta; 
+          lampSphere.rotation.z = controls.epsilon;
+
+          if (!controls.Animate) {
+            basement.position.x = controls.lamp_x; 
+            basement.position.y = controls.lamp_y;
+            basement.position.z = textHeight + 2*textBevelThickness + basementHeight/2;
+          }
+
+          cube.position.x = controls.object_x; 
+          cube.position.y = controls.object_y; 
+
+          //render using requestAnimationFrame
+          requestAnimationFrame(render);
+          renderer.render(scene, camera);
+        }
+      });
+    </script>  
+ </body>
+</html>
